@@ -1,0 +1,7 @@
+---
+  - name: run lemmy install role
+    # generate host file first with the preinstall playbook
+    # only works on ubuntu
+    # ansible-playbook --ask-become-pass --become -i lemmy-ansible/inventory/ lemmy_install.yml
+    # lets encrypt failing, move to self ip
+    import_playbook: "{{ playbook_dir }}/lemmy-ansible/lemmy.yml"

@@ -1,0 +1,37 @@
+---
+  - hosts: localhost
+    vars: 
+      domain: pantsuraid
+      lemmy_local_path: "{{ playbook_dir }}/lemmy-ansible"
+    tasks:
+    - name: Git checkout lemmy repo
+      ansible.builtin.git:
+        repo: 'https://github.com/LemmyNet/lemmy-ansible.git'
+        dest: "{{ lemmy_local_path }}"
+        force: true
+    - name: make folder
+      file:
+        state: directory
+        name: "{{ lemmy_local_path }}/inventory/host_vars/{{ domain }}"
+    - name: copy config file
+      copy:
+        remote_src: true
+        src: "{{ lemmy_local_path }}/examples/config.hjson"
+        dest: "{{ lemmy_local_path }}/inventory/host_vars/{{ domain }}/config.hjson"
+    - name: generate hosts hosts file
+      copy:
+        dest: "{{ lemmy_local_path }}/inventory/hosts"
+        content: |
+          [all]
+          localhost  ansible_connection=local  domain=futbear.win  letsencrypt_contact_email=webmaster@futbear.win  lemmy_base_dir=/srv/lemmy
+    - name: copy psql file
+      copy:
+        remote_src: true
+        src: "{{ lemmy_local_path }}/examples/customPostgresql.conf"
+        dest: "{{ lemmy_local_path }}/inventory/host_vars/{{ domain }}/customPostgresql.conf"
+    # replace hosts
+    #- name: replace host with localhost
+    #  replace:
+    #    path: "{{ lemmy_local_path }}/lemmy.yml"
+    #    regexp: 'hosts: all'
+    #    replace: 'hosts: localhost'
