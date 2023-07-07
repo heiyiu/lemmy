@@ -1,7 +1,10 @@
 ---
   - hosts: localhost
+    vars_files:
+      # contains the following variables:
+      # domain, cf_email
+      - "{{ playbook_dir }}/files/secrets.yml"
     vars: 
-      domain: pantsuraid
       lemmy_local_path: "{{ playbook_dir }}/lemmy-ansible"
     tasks:
     - name: Git checkout lemmy repo
@@ -23,12 +26,22 @@
         dest: "{{ lemmy_local_path }}/inventory/hosts"
         content: |
           [all]
-          localhost  ansible_connection=local  domain=futbear.win  letsencrypt_contact_email=webmaster@futbear.win  lemmy_base_dir=/srv/lemmy
+          localhost  ansible_connection=local  domain={{ domain }}  letsencrypt_contact_email=webmaster@{{ domain }}  lemmy_base_dir=/srv/lemmy
     - name: copy psql file
       copy:
         remote_src: true
         src: "{{ lemmy_local_path }}/examples/customPostgresql.conf"
         dest: "{{ lemmy_local_path }}/inventory/host_vars/{{ domain }}/customPostgresql.conf"
+    - name: Create a lemmy A record to point to cloud instance
+      community.general.cloudflare_dns:
+        zone: "{{ domain }}"
+        record: lemmy
+        type: A
+        value: "{{ ansible_default_ipv4.address }}"
+        account_email: "{{ cf_email }}"
+        api_token: "{{ cf_token }}"
+        proxied: true
+      register: record
     # replace hosts
     #- name: replace host with localhost
     #  replace:
